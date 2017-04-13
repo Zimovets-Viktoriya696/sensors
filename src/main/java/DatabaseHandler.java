@@ -91,6 +91,7 @@ public class DatabaseHandler {
         int circle = 0;
 
         ArrayList<Flow> flow = new ArrayList<Flow>();
+        ArrayList<LiftedPoint> liftedPoints = new ArrayList<LiftedPoint>();
 
         for (int i = 1; i < akhz1.size() - 2; i++) {
             if (circle < 160) {
@@ -99,7 +100,7 @@ public class DatabaseHandler {
                 float delta_old = akhz1.get(i).getValue() - akhz1.get(i - 1).getValue();
                 float delta_new = akhz1.get(i + count).getValue() - akhz1.get(i).getValue();
                 if (temp < -520 && (delta_new > 0 && delta_old < 0)) {
-
+                    liftedPoints.add(new Point(time, temp), true);
                     flow.add(new LiftUp(time, temp));// подъом
                     circle++;
                 } else if (temp > 50 && (delta_new < 0 && delta_old > 0)) {
