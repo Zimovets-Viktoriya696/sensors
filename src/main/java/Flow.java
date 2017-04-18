@@ -23,11 +23,3 @@ public class Flow {
 
 
 }
-class TimeComparatorFor implements Comparator<Flow>
-{
-
-    @Override
-    public int compare(Flow a, Flow b) {
-        return a.getTime() < b.getTime() ? -1 : a.getTime() == b.getTime() ? 0 : 1;
-    }
-}

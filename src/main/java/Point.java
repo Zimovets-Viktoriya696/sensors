@@ -2,29 +2,21 @@ import java.util.Comparator;
 
 public class Point
 {
-    private long _time;
-    public long getTime() { return _time; }
-    private float _value;
-    public float getValue() { return _value; }
+    private long time;
+    public long getTime() { return time; }
+    private float value;
+    public float getValue() { return value; }
 
     public Point(long time, float value)
     {
-        _time = time;
-        _value = value;
+        this.time = time;
+        this.value = value;
     }
 
     @Override
     public String toString()
     {
-        return String.format("{time=%d, value=%f}", _time, _value);
+        return String.format("{time=%d, value=%f}", time, value);
     }
 }
 
-class TimeComparator implements Comparator<Point>
-{
-    @Override
-    public int compare(Point a, Point b)
-    {
-        return a.getTime() < b.getTime() ? -1 : a.getTime() == b.getTime() ? 0 : 1;
-    }
-}

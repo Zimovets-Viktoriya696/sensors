@@ -47,66 +47,24 @@ public class DatabaseHandler {
     }
 
 
-    public ArrayList<Point> GetCircle() {
+    public ArrayList<LiftedPoint> GetCircle() {
         int count = 1;
-        ArrayList<Point> akhz1 = new ArrayList<Point>();
-        FillTable(akhz1, "akhz1_data", 50, 61);
-        int circle = 0;
-        ArrayList<Point> down = new ArrayList<Point>();
-
-
-        for (int i = 1; i < akhz1.size() - 2; i++) {
-            if (circle < 160) {
-                float temp = akhz1.get(i).getValue();
-                float delta_old = akhz1.get(i).getValue() - akhz1.get(i - 1).getValue();
-                float delta_new = akhz1.get(i + count).getValue() - akhz1.get(i).getValue();
-                if (temp > 48.0 && (delta_new < 0 && delta_old > 0)) {
-
-                    down.add(akhz1.get(i));//конец подъома
-                    circle++;
-                } else if (temp < -520 && (delta_new > 0 && delta_old < 0)) {
-                    down.add(akhz1.get(i));
-                    // down.add(akhz1.get(i).getTime());//начало подъема
-                    circle++;
-                }
-                   /* else if (temp > 48 && (delta_new < 0 && delta_old > 0)) {
-                        down.add(akhz1.get(i));
-                       // down.add(akhz1.get(i).getTime());// начало спуска
-                        circle++;
-                    }
-                    else if (temp < -520 && (delta_new < 0 && delta_old > 0)) {
-                        down.add(akhz1.get(i));
-                        //down.add(akhz1.get(i).getTime()); // конец спуска
-                        circle++;
-                    }*/
-            }
-        }
-        return down;
-    }
-
-    public ArrayList<LiftedPoint> GetCircle1() {
-        int count = 1;
-        ArrayList<Point> akhz1 = new ArrayList<Point>();
-        FillTable(akhz1, "akhz1_data", 52, 61);
         int circle = 0;
 
-        ArrayList<Flow> flow = new ArrayList<Flow>();
+        ArrayList<Point> akhz1 = GetAkhz1();
         ArrayList<LiftedPoint> liftedPoints = new ArrayList<LiftedPoint>();
 
-        for (int i = 1; i < akhz1.size() - 2; i++) {
+        for (int i = 1; i <= akhz1.size() - 2; i++) {
             if (circle < 160) {
                 float temp = akhz1.get(i).getValue();
                 long time = akhz1.get(i).getTime();
                 float delta_old = akhz1.get(i).getValue() - akhz1.get(i - 1).getValue();
                 float delta_new = akhz1.get(i + count).getValue() - akhz1.get(i).getValue();
                 if (temp < -520 && (delta_new > 0 && delta_old < 0)) {
-                    liftedPoints.add(new LiftedPoint(new Point(time, temp), true));
-                    flow.add(new LiftUp(time, temp));// подъом
+                    liftedPoints.add(new LiftedPoint(akhz1.get(i), true));// up
                     circle++;
                 } else if (temp > 50 && (delta_new < 0 && delta_old > 0)) {
-                    liftedPoints.add(new LiftedPoint(new Point(time, temp), false));
-                    flow.add(new LiftDown(time, temp));
-
+                    liftedPoints.add(new LiftedPoint(akhz1.get(i), false));// down
                     circle++;
                 }
             }
@@ -115,7 +73,7 @@ public class DatabaseHandler {
     }
 
 
-    public ArrayList<Float> getTemperature() {
+    public List<TreeMap<Long, Float>> getTemperature() {
         final int firstTablePostfix = 52 ;
         final int lastTablePostfix = 62;
 
@@ -123,31 +81,29 @@ public class DatabaseHandler {
         List<TreeMap<Long, Float>> res = new ArrayList<TreeMap<Long, Float>>();
 
         ArrayList<Point> temperature = new ArrayList<Point>();
-        System.out.println(temperature.size() + "+++++++++++++size");
         FillTable(temperature, "pressdrv", firstTablePostfix, lastTablePostfix);
 
         temperature.sort(new TimeComparator());
 
-        ArrayList<LiftedPoint> list = GetCircle1();
+        ArrayList<LiftedPoint> list = GetCircle();
         for (int i = 0; i < list.size() - 1; i++) {
-            LiftedPoint instance1 = list.get(i);
-            LiftedPoint instance2 = list.get(i + 1);
+            LiftedPoint instance = list.get(i);
 
             long timeOfPosition1 = list.get(i).getPoint().getTime();
             long timeOfPosition2 = list.get(i + 1).getPoint().getTime();
 
             for (int j = 0; j < temperature.size(); j++) {
                 long timeOfTemperature = temperature.get(j).getTime();
-                    if ((instance1.isUpwards()) && (timeOfPosition1 <= timeOfTemperature && timeOfTemperature <= timeOfPosition2)) {
+                    if ((instance.isUpwards()) && (timeOfPosition1 <= timeOfTemperature && timeOfTemperature <= timeOfPosition2)) {
 
                     rowss.add(temperature.get(j).getValue());
                     TreeMap<Long, Float> treeMap = new TreeMap<Long, Float>();
                     treeMap.put(temperature.get(j).getTime(),  temperature.get(j).getValue());
                     res.add(treeMap);
-                    }
+                }
             }
         }
-        return rowss;
+        return res;
     }
 
     private void CopyPointsFromTable(String query, ArrayList<Point> toList) {
