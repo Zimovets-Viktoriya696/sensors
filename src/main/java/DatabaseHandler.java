@@ -119,17 +119,20 @@ public class DatabaseHandler {
                 long dateInMs=0;
                 long timeInMs=0;
                 java.util.Date curentDate = rs.getDate(DATE_COLUMN);
-                if (curentDate!=null)
-                    dateInMs=curentDate.getTime();
-                java.util.Date curentTime = rs.getDate(DATE_COLUMN);
-                if (curentTime!=null)
-                    timeInMs=curentTime.getTime();
-                long ms = rs.getInt(MSEC_COLUMN);
-                long time = dateInMs + timeInMs + ms;
-                float value = rs.getFloat(VALUE_COLUMN);
+                java.util.Date timeInMsec = rs.getTime(DATE_COLUMN);
 
-                toList.add(new Point(time, value));
 
+                if (curentDate == null && timeInMsec == null){
+                    continue;}
+                    else {
+                    dateInMs = curentDate.getTime();
+                    timeInMs = timeInMsec.getTime();
+                    long ms = rs.getInt(MSEC_COLUMN);
+                    long time = dateInMs + timeInMs + ms;
+                    float value = rs.getFloat(VALUE_COLUMN);
+
+                    toList.add(new Point(time, value));
+                }
             }
         } catch (SQLException sqlEx) {
             sqlEx.printStackTrace();
