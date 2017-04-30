@@ -4,9 +4,9 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class Program {
-    private static final String DATABASE_URL = "jdbc:mysql://localhost:3306/export_mybase";
+    private static final String DATABASE_URL = "jdbc:mysql://localhost:3306/db";
     private static final String DATABASE_USERNAME = "root";
-    private static final String DATABASE_PASSWORD = "1234";
+    private static final String DATABASE_PASSWORD = "Digital8";
 
     public static void main(String[] args) {
         DatabaseHandler database = new DatabaseHandler(DATABASE_URL, DATABASE_USERNAME, DATABASE_PASSWORD);

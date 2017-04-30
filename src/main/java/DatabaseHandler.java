@@ -4,54 +4,57 @@ import java.util.List;
 import java.util.TreeMap;
 
 public class DatabaseHandler {
-    private String _url;
-    private String _user;
-    private String _password;
+    private String url;
+    private String user;
+    private String password;
 
-    private Connection _con;
-    private Statement _stmt;
-    private ResultSet _rs;
+    private Connection con;
+    private Statement stmt;
+    private ResultSet rs;
 
     private static final int DATE_COLUMN = 1;
     private static final int MSEC_COLUMN = 2;
     private static final int VALUE_COLUMN = 3;
     private static final int NUMBER_OF_VALUES_IN_TABLE = 36;
+    private static final int NUMBER_OF_SIGNAL_INDEX = 11;
 
     public DatabaseHandler(String url, String user, String password) {
-        _url = url;
-        _user = user;
-        _password = password;
+        this.url = url;
+        this.user = user;
+        this.password = password;
     }
 
-    public ArrayList<Point> GetAkhz1() {
+    public ArrayList<Point> getAkhz() {
         final int firstTablePostfix = 52;
         final int lastTablePostfix = 61;
 
         ArrayList<Point> akhz1 = new ArrayList<Point>();
-        FillTable(akhz1, "akhz1_data", firstTablePostfix, lastTablePostfix);
+        FillTable(akhz1, "akhz1_data", firstTablePostfix, lastTablePostfix, 1);
 
         akhz1.sort(new TimeComparator());
 
         return akhz1;
     }
 
-    private void FillTable(ArrayList<Point> toList, String tableNamePrefix, int firstTablePostfix, int lastTablePostfix) {
+    private void FillTable(ArrayList<Point> toList, String tableNamePrefix, int firstTablePostfix, int lastTablePostfix, int signalIndex ) {
         for (int currentTablePostfix = firstTablePostfix; currentTablePostfix <= lastTablePostfix; currentTablePostfix++) {
             for (int currentNumberOfValues = 1; currentNumberOfValues <= NUMBER_OF_VALUES_IN_TABLE; currentNumberOfValues++) {
-                String query = String.format("SELECT Sample_TDate_%d, Sample_MSec_%d, Sample_Value_%d FROM %s_%d WHERE Signal_Index=1",
-                        currentNumberOfValues, currentNumberOfValues, currentNumberOfValues, tableNamePrefix, currentTablePostfix);
+                for (int currentSignalIndex = 1; currentSignalIndex <= signalIndex; currentSignalIndex++) {
 
-                CopyPointsFromTable(query, toList);
+                    String query = String.format("SELECT Sample_TDate_%d, Sample_MSec_%d, Sample_Value_%d FROM %s_%d WHERE Signal_Index=%d",
+                            currentNumberOfValues, currentNumberOfValues, currentNumberOfValues, tableNamePrefix, currentTablePostfix, currentSignalIndex);
+
+                    copyPointsFromTable(query, toList);
+                }
             }
         }
     }
 
-
-    public ArrayList<LiftedPoint> GetCircle() {
+    public ArrayList<LiftedPoint> getCircle() {
         int count = 1;
         int circle = 0;
 
-        ArrayList<Point> akhz1 = GetAkhz1();
+        ArrayList<Point> akhz1 = getAkhz();
         ArrayList<LiftedPoint> liftedPoints = new ArrayList<LiftedPoint>();
 
         for (int i = 1; i <= akhz1.size() - 2; i++) {
@@ -81,11 +84,11 @@ public class DatabaseHandler {
         List<TreeMap<Long, Float>> res = new ArrayList<TreeMap<Long, Float>>();
 
         ArrayList<Point> temperature = new ArrayList<Point>();
-        FillTable(temperature, "pressdrv", firstTablePostfix, lastTablePostfix);
+        FillTable(temperature, "pressdrv", firstTablePostfix, lastTablePostfix, 11);
 
         temperature.sort(new TimeComparator());
 
-        ArrayList<LiftedPoint> list = GetCircle();
+        ArrayList<LiftedPoint> list = getCircle();
         for (int i = 0; i < list.size() - 1; i++) {
             LiftedPoint instance = list.get(i);
 
@@ -106,39 +109,41 @@ public class DatabaseHandler {
         return res;
     }
 
-    private void CopyPointsFromTable(String query, ArrayList<Point> toList) {
+    private void copyPointsFromTable(String query, ArrayList<Point> toList) {
         try {
-            _con = DriverManager.getConnection(_url, _user, _password);
-            _stmt = _con.createStatement();
-            _rs = _stmt.executeQuery(query);
+            con = DriverManager.getConnection(url, user, password);
+            stmt = con.createStatement();
+            rs = stmt.executeQuery(query);
 
-            while (_rs.next()) {
-                try {
-                    long dateInMs = _rs.getDate(DATE_COLUMN).getTime();
-                    long timeInMs = _rs.getTime(DATE_COLUMN).getTime();
-                    long ms = _rs.getInt(MSEC_COLUMN);
+            while (rs.next()) {
+                long dateInMs=0;
+                long timeInMs=0;
+                java.util.Date curentDate = rs.getDate(DATE_COLUMN);
+                if (curentDate!=null)
+                    dateInMs=curentDate.getTime();
+                java.util.Date curentTime = rs.getDate(DATE_COLUMN);
+                if (curentTime!=null)
+                    timeInMs=curentTime.getTime();
+                long ms = rs.getInt(MSEC_COLUMN);
+                long time = dateInMs + timeInMs + ms;
+                float value = rs.getFloat(VALUE_COLUMN);
 
-                    long time = dateInMs + timeInMs + ms;
-                    float value = _rs.getFloat(VALUE_COLUMN);
+                toList.add(new Point(time, value));
 
-                    toList.add(new Point(time, value));
-                } catch (NullPointerException nullEx) {
-                    nullEx.printStackTrace();
-                }
             }
         } catch (SQLException sqlEx) {
             sqlEx.printStackTrace();
         } finally {
             try {
-                _con.close();
+                con.close();
             } catch (SQLException se) {
             }
             try {
-                _stmt.close();
+                stmt.close();
             } catch (SQLException se) {
             }
             try {
-                _rs.close();
+                rs.close();
             } catch (SQLException se) {
             }
         }
