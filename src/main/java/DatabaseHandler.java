@@ -1,6 +1,7 @@
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 
 public class DatabaseHandler {
@@ -109,6 +110,61 @@ public class DatabaseHandler {
         return res;
     }
 
+    private Map<Integer, List<Point>> readData (String nameTable){
+
+    String query = String.format("SELECT * FROM %s", nameTable);
+        Map<Integer, List<Point>> data = new TreeMap<>();
+        try {
+            con = DriverManager.getConnection(url, user, password);
+            stmt = con.createStatement();
+            rs = stmt.executeQuery(query);
+
+            while (rs.next()) {
+                long dateInMs=0;
+                long timeInMs=0;
+                java.util.Date curentDate = rs.getDate(DATE_COLUMN);
+                java.util.Date timeInMsec = rs.getTime(DATE_COLUMN);
+                int SignalIndex = rs.getInt("Signal_Index");
+
+                if (curentDate == null && timeInMsec == null){
+                    continue;}
+                else {
+
+                    if(data.containsKey(SignalIndex)){
+
+                                           }
+                    else {data.put(SignalIndex, new ArrayList<>()); }
+
+                    for (int i = 1; i <= 36; i++) {
+                      int  value1 = rs.getInt("Sample_Value_" + i);
+                        dateInMs = curentDate.getTime();
+                        timeInMs = timeInMsec.getTime();
+                        long ms = rs.getInt(MSEC_COLUMN);
+                        long time = dateInMs + timeInMs + ms;
+                        float value = rs.getFloat(VALUE_COLUMN);
+
+                    data.get(SignalIndex).add(new Point(time, value));}
+                }
+            }
+        } catch (SQLException sqlEx) {
+            sqlEx.printStackTrace();
+        } finally {
+            try {
+                rs.close();
+            } catch (SQLException se) {
+            }
+            try {
+                stmt.close();
+            } catch (SQLException se) {
+            }
+            try {
+                con.close();
+            } catch (SQLException se) {
+            }
+        }
+      return   data;
+    }
+
     private void copyPointsFromTable(String query, ArrayList<Point> toList) {
         try {
             con = DriverManager.getConnection(url, user, password);
@@ -138,7 +194,7 @@ public class DatabaseHandler {
             sqlEx.printStackTrace();
         } finally {
             try {
-                con.close();
+                rs.close();
             } catch (SQLException se) {
             }
             try {
@@ -146,7 +202,7 @@ public class DatabaseHandler {
             } catch (SQLException se) {
             }
             try {
-                rs.close();
+                con.close();
             } catch (SQLException se) {
             }
         }
