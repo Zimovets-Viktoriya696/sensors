@@ -110,47 +110,47 @@ public class DatabaseHandler {
         return res;
     }
 
-    private Map<Integer, List<Point>> readData (String nameTable){
-
-    String query = String.format("SELECT * FROM %s", nameTable);
+    public Map<Integer, List<Point>> readData (String nameTable){
+        String query = String.format("SELECT * FROM %s", nameTable);
         Map<Integer, List<Point>> data = new TreeMap<>();
-        try {
-            con = DriverManager.getConnection(url, user, password);
-            stmt = con.createStatement();
-            rs = stmt.executeQuery(query);
-
-            while (rs.next()) {
-                long dateInMs=0;
-                long timeInMs=0;
-                java.util.Date curentDate = rs.getDate(DATE_COLUMN);
-                java.util.Date timeInMsec = rs.getTime(DATE_COLUMN);
-                int SignalIndex = rs.getInt("Signal_Index");
-
-                if (curentDate == null && timeInMsec == null){
-                    continue;}
-                else {
-
-                    if(data.containsKey(SignalIndex)){
-
-                                           }
-                    else {data.put(SignalIndex, new ArrayList<>()); }
-
-                    for (int i = 1; i <= 36; i++) {
-                      int  value1 = rs.getInt("Sample_Value_" + i);
-                        dateInMs = curentDate.getTime();
-                        timeInMs = timeInMsec.getTime();
-                        long ms = rs.getInt(MSEC_COLUMN);
-                        long time = dateInMs + timeInMs + ms;
-                        float value = rs.getFloat(VALUE_COLUMN);
-
-                    data.get(SignalIndex).add(new Point(time, value));}
-                }
-            }
-        } catch (SQLException sqlEx) {
-            sqlEx.printStackTrace();
-        } finally {
             try {
-                rs.close();
+                con = DriverManager.getConnection(url, user, password);
+                stmt = con.createStatement();
+                rs = stmt.executeQuery(query);
+
+                    while (rs.next()) {
+                    long dateInMs=0;
+                    long timeInMs=0;
+
+                        for (int i = 1; i <= 36; i++) {
+                            java.util.Date curentDate = rs.getDate("Sample_TDate_" + i);
+                            java.util.Date timeInMsec = rs.getTime("Sample_TDate_" + i);
+                            int SignalIndex = rs.getInt("Signal_Index");
+
+                            if (curentDate != null && timeInMsec != null){
+                                if(!data.containsKey(SignalIndex)){
+                                    data.put(SignalIndex, new ArrayList<>());
+                                }
+                            int  value = rs.getInt("Sample_Value_" + i);
+                            dateInMs = curentDate.getTime();
+                            timeInMs = timeInMsec.getTime();
+                            long ms = rs.getInt("Sample_MSec_" + i);
+                            long time = dateInMs + timeInMs + ms;
+
+                            data.get(SignalIndex).add(new Point(time, value));}
+                            else {continue;
+                            }
+                        }
+                    }
+                }
+        catch (SQLException sqlEx) {
+            sqlEx.printStackTrace();
+        }
+        finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
             } catch (SQLException se) {
             }
             try {

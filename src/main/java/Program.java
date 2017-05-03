@@ -13,11 +13,12 @@ public class Program {
 
      //   ArrayList<Point> akhz1 = database.GetAkhz1();
         // ArrayList<Float> list = database.getTemperature();
-        List<TreeMap<Long, Float>> list = database.getTemperature();
+     //   List<TreeMap<Long, Float>> list = database.getTemperature();
+        Map<Integer, List<Point>> list = database.readData("temp_51");
 
 
         for (int i = 0; i < list.size() - 1; i++) {
-            for (Map.Entry<Long, Float> entry : list.get(i).entrySet()) {
+            for (Map.Entry entry : list.entrySet()) {
                 System.out.println(entry.getKey() + " " + entry.getValue());
 
                 // System.out.println(i + " " + list.get(i)  + " value ");
