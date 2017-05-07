@@ -14,7 +14,7 @@ public class Program {
      //   ArrayList<Point> akhz1 = database.GetAkhz1();
         // ArrayList<Float> list = database.getTemperature();
      //   List<TreeMap<Long, Float>> list = database.getTemperature();
-        Map<Integer, List<Point>> list = database.readData("temp_51");
+        Map<Integer, List<Point>> list = database.readData("pressdrv_51");
 
 
         for (int i = 0; i < list.size() - 1; i++) {
