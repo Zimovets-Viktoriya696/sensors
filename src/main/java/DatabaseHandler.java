@@ -110,7 +110,7 @@ public class DatabaseHandler {
         return res;
     }
 
-    public Map<Integer, List<Point>> readData (String nameTable){
+    private Map<Integer, List<Point>> readData (String nameTable){
         String query = String.format("SELECT * FROM %s", nameTable);
         Map<Integer, List<Point>> data = new TreeMap<>();
         try {
@@ -120,10 +120,10 @@ public class DatabaseHandler {
             while (rs.next()) {
                 long dateInMs=0;
                 long timeInMs=0;
+                int SignalIndex = rs.getInt("Signal_Index");
                 for (int i = 1; i <= 36; i++) {
                     java.util.Date curentDate = rs.getDate("Sample_TDate_" + i);
                     java.util.Date timeInMsec = rs.getTime("Sample_TDate_" + i);
-                    int SignalIndex = rs.getInt("Signal_Index");
                         if (curentDate != null && timeInMsec != null){
                             if(!data.containsKey(SignalIndex)){
                                 data.put(SignalIndex, new ArrayList<>());
@@ -158,6 +158,14 @@ public class DatabaseHandler {
             }
         }
       return   data;
+    }
+
+    public Map<Integer, List<Point>> readAllData(int firstNumerTable, int lastNamberTable, String nameTable){
+        Map<Integer, List<Point>> data = new TreeMap<>();
+        for (int i = firstNumerTable; i < lastNamberTable; i++) {
+            data = readData(nameTable);
+        }
+        return data;
     }
 
     private void copyPointsFromTable(String query, ArrayList<Point> toList) {
