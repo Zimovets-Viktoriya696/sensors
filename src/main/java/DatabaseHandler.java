@@ -1,8 +1,5 @@
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public class DatabaseHandler {
     private String url;
@@ -124,20 +121,20 @@ public class DatabaseHandler {
                 for (int i = 1; i <= 36; i++) {
                     java.util.Date curentDate = rs.getDate("Sample_TDate_" + i);
                     java.util.Date timeInMsec = rs.getTime("Sample_TDate_" + i);
-                        if (curentDate != null && timeInMsec != null){
-                            if(!data.containsKey(SignalIndex)){
+                    if (curentDate != null && timeInMsec != null){
+                        if(!data.containsKey(SignalIndex)){
                                 data.put(SignalIndex, new ArrayList<>());
-                                }
-                            int  value = rs.getInt("Sample_Value_" + i);
-                            dateInMs = curentDate.getTime();
-                            timeInMs = timeInMsec.getTime();
-                            long ms = rs.getInt("Sample_MSec_" + i);
-                            long time = dateInMs + timeInMs + ms;
-                            data.get(SignalIndex).add(new Point(time, value));
-                            }
                         }
+                        int  value = rs.getInt("Sample_Value_" + i);
+                        dateInMs = curentDate.getTime();
+                        timeInMs = timeInMsec.getTime();
+                        long ms = rs.getInt("Sample_MSec_" + i);
+                        long time = dateInMs + timeInMs + ms;
+                        data.get(SignalIndex).add(new Point(time, value));
                     }
                 }
+            }
+        }
         catch (SQLException sqlEx) {
             sqlEx.printStackTrace();
         }
@@ -157,13 +154,21 @@ public class DatabaseHandler {
             } catch (SQLException se) {
             }
         }
-      return   data;
+        return   data;
     }
 
-    public Map<Integer, List<Point>> readAllData(int firstNumerTable, int lastNamberTable, String nameTable){
+    public Map<Integer, List<Point>> readAllData(int firstNumerTable, int lastNumberTable, String nameTable){
         Map<Integer, List<Point>> data = new TreeMap<>();
-        for (int i = firstNumerTable; i < lastNamberTable; i++) {
-            data = readData(nameTable);
+        for (int i = firstNumerTable; i < lastNumberTable; i++) {
+            Map<Integer, List<Point>> tableDate = readData(nameTable);
+            Iterator<Map.Entry<Integer, List<Point>>> entries = data.entrySet().iterator();
+            while (entries.hasNext()){
+                Map.Entry<Integer, List<Point>> entry = entries.next();
+                int key = entry.getKey();
+                if(tableDate.containsKey(key)){
+                    data.get(key).addAll(entry.getValue());
+                }
+            }
         }
         return data;
     }
@@ -173,14 +178,11 @@ public class DatabaseHandler {
             con = DriverManager.getConnection(url, user, password);
             stmt = con.createStatement();
             rs = stmt.executeQuery(query);
-
             while (rs.next()) {
                 long dateInMs=0;
                 long timeInMs=0;
                 java.util.Date curentDate = rs.getDate(DATE_COLUMN);
                 java.util.Date timeInMsec = rs.getTime(DATE_COLUMN);
-
-
                 if (curentDate == null && timeInMsec == null){
                     continue;}
                     else {
@@ -189,7 +191,6 @@ public class DatabaseHandler {
                     long ms = rs.getInt(MSEC_COLUMN);
                     long time = dateInMs + timeInMs + ms;
                     float value = rs.getFloat(VALUE_COLUMN);
-
                     toList.add(new Point(time, value));
                 }
             }
