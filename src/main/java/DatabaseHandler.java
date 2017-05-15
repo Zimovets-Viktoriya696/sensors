@@ -1,5 +1,8 @@
 import java.sql.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class DatabaseHandler {
     private String url;
@@ -95,7 +98,7 @@ public class DatabaseHandler {
 
             for (int j = 0; j < temperature.size(); j++) {
                 long timeOfTemperature = temperature.get(j).getTime();
-                    if ((instance.isUpwards()) && (timeOfPosition1 <= timeOfTemperature && timeOfTemperature <= timeOfPosition2)) {
+                if ((instance.isUpwards()) && (timeOfPosition1 <= timeOfTemperature && timeOfTemperature <= timeOfPosition2)) {
 
                     rowss.add(temperature.get(j).getValue());
                     TreeMap<Long, Float> treeMap = new TreeMap<Long, Float>();
@@ -107,8 +110,11 @@ public class DatabaseHandler {
         return res;
     }
 
-    private Map<Integer, List<Point>> readData (String nameTable){
-        String query = String.format("SELECT * FROM %s", nameTable);
+    private Map<Integer, List<Point>> readData (String nameTable, int Signal_Index){
+        String query = "";
+        if(Signal_Index == 0){
+            query = String.format("SELECT * FROM %s", nameTable);}
+        else { query = String.format("SELECT * FROM %s WHERE Signal_Index = %d" , nameTable, Signal_Index);}
         Map<Integer, List<Point>> data = new TreeMap<>();
         try {
             con = DriverManager.getConnection(url, user, password);
@@ -123,7 +129,7 @@ public class DatabaseHandler {
                     java.util.Date timeInMsec = rs.getTime("Sample_TDate_" + i);
                     if (curentDate != null && timeInMsec != null){
                         if(!data.containsKey(SignalIndex)){
-                                data.put(SignalIndex, new ArrayList<>());
+                            data.put(SignalIndex, new ArrayList<>());
                         }
                         int  value = rs.getInt("Sample_Value_" + i);
                         dateInMs = curentDate.getTime();
@@ -154,24 +160,69 @@ public class DatabaseHandler {
             } catch (SQLException se) {
             }
         }
-        return   data;
+        return data;
     }
 
-    public Map<Integer, List<Point>> readAllData(int firstNumerTable, int lastNumberTable, String nameTable){
+    public Map<Integer, List<Point>> readAllData(int firstNumerTable, int lastNumberTable, String nameTable, int SignalIndex){
         Map<Integer, List<Point>> data = new TreeMap<>();
         for (int i = firstNumerTable; i < lastNumberTable; i++) {
-            Map<Integer, List<Point>> tableDate = readData(nameTable);
-            Iterator<Map.Entry<Integer, List<Point>>> entries = data.entrySet().iterator();
-            while (entries.hasNext()){
-                Map.Entry<Integer, List<Point>> entry = entries.next();
+            Map<Integer, List<Point>> tableData = readData(nameTable + i, SignalIndex);
+            for (Map.Entry<Integer, List<Point>> entry: tableData.entrySet()){
                 int key = entry.getKey();
-                if(tableDate.containsKey(key)){
+                if(data.containsKey(key)){
                     data.get(key).addAll(entry.getValue());
+                }
+                else {
+                    data.put(key, new ArrayList<>());
                 }
             }
         }
         return data;
     }
+
+    public List<Period> parseData () {
+        List<Period> resultPosition = new ArrayList<>();
+        Map<Integer, List<Point>> temperature = readAllData(51, 54, "pressdrv_", 0);
+        Map<Integer, List<Point>> position = readAllData(51, 54, "akhz_", 1);
+        int count = 1;
+        int circle = 1;
+        long timeUp = 0;
+        long timeDown = 0;
+        boolean direction = false;
+        for (Map.Entry<Integer, List<Point>> entry : position.entrySet()) {
+            for (int i = 0; i < position.size(); i++) {
+                //if (circle < 160) {
+                float temp = entry.getValue().get(i).getValue();
+                long time = entry.getValue().get(i).getTime();
+                float delta_old = entry.getValue().get(i).getValue() - entry.getValue().get(i - 1).getValue();
+                float delta_new = entry.getValue().get(i + count).getValue() - entry.getValue().get(i).getValue();
+                if (temp < -520 && (delta_new > 0 && delta_old < 0)) {
+                    timeUp = time;
+                    direction = true;// up
+                    circle++;
+                }
+                else if (temp < -520 && (delta_new < 0 && delta_old > 0)) {
+                    timeUp = time;
+                    direction = true;// up
+                    circle++;
+                }
+                else if (temp > 50 && (delta_new < 0 && delta_old > 0)) {
+                    timeDown = time;
+                    direction = false;// down
+                    circle++;
+                }
+                else if (temp > 50 && (delta_new > 0 && delta_old < 0)) {
+                    timeDown = time;
+                    direction = false;// down
+                    circle++;
+                }
+                resultPosition.add(new Period(timeUp, timeDown, direction));
+            }
+        }
+        return resultPosition;
+    }
+
+
 
     private void copyPointsFromTable(String query, ArrayList<Point> toList) {
         try {
@@ -185,7 +236,7 @@ public class DatabaseHandler {
                 java.util.Date timeInMsec = rs.getTime(DATE_COLUMN);
                 if (curentDate == null && timeInMsec == null){
                     continue;}
-                    else {
+                else {
                     dateInMs = curentDate.getTime();
                     timeInMs = timeInMsec.getTime();
                     long ms = rs.getInt(MSEC_COLUMN);
