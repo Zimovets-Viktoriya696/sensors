@@ -113,8 +113,11 @@ public class DatabaseHandler {
     private Map<Integer, List<Point>> readData (String nameTable, int Signal_Index){
         String query = "";
         if(Signal_Index == 0){
-            query = String.format("SELECT * FROM %s", nameTable);}
-        else { query = String.format("SELECT * FROM %s WHERE Signal_Index = %d" , nameTable, Signal_Index);}
+            query = String.format("SELECT * FROM %s", nameTable);
+        }
+        else {
+            query = String.format("SELECT * FROM %s WHERE Signal_Index = %d" , nameTable, Signal_Index);
+        }
         Map<Integer, List<Point>> data = new TreeMap<>();
         try {
             con = DriverManager.getConnection(url, user, password);
@@ -131,7 +134,7 @@ public class DatabaseHandler {
                         if(!data.containsKey(SignalIndex)){
                             data.put(SignalIndex, new ArrayList<>());
                         }
-                        int  value = rs.getInt("Sample_Value_" + i);
+                        int value = rs.getInt("Sample_Value_" + i);
                         dateInMs = curentDate.getTime();
                         timeInMs = timeInMsec.getTime();
                         long ms = rs.getInt("Sample_MSec_" + i);
@@ -173,29 +176,32 @@ public class DatabaseHandler {
                     data.get(key).addAll(entry.getValue());
                 }
                 else {
-                    data.put(key, new ArrayList<>());
+                    data.put(key, new ArrayList<>(entry.getValue()));
                 }
             }
         }
         return data;
     }
 
-    public List<Period> parseData () {
+    public List<Period> getPeriods () {
         List<Period> resultPosition = new ArrayList<>();
-        Map<Integer, List<Point>> temperature = readAllData(51, 54, "pressdrv_", 0);
-        Map<Integer, List<Point>> position = readAllData(51, 54, "akhz_", 1);
+        //Map<Integer, List<Point>> temperature = readAllData(51, 54, "pressdrv_", 0);
+        Map<Integer, List<Point>> position = readAllData(51, 54, "akhz1_data_", 1);
+
         int count = 1;
         int circle = 1;
         long timeUp = 0;
         long timeDown = 0;
         boolean direction = false;
         for (Map.Entry<Integer, List<Point>> entry : position.entrySet()) {
-            for (int i = 0; i < position.size(); i++) {
+            for (int i = 1; i < entry.getValue().size()-1; i++) {
                 //if (circle < 160) {
                 float temp = entry.getValue().get(i).getValue();
+                float temp1 = entry.getValue().get(i - 1).getValue();
+
                 long time = entry.getValue().get(i).getTime();
-                float delta_old = entry.getValue().get(i).getValue() - entry.getValue().get(i - 1).getValue();
-                float delta_new = entry.getValue().get(i + count).getValue() - entry.getValue().get(i).getValue();
+                float delta_old = entry.getValue().get(i).getValue() - entry.getValue().get(i-1).getValue();
+                float delta_new = entry.getValue().get(i + 1).getValue() - entry.getValue().get(i).getValue();
                 if (temp < -520 && (delta_new > 0 && delta_old < 0)) {
                     timeUp = time;
                     direction = true;// up
@@ -216,12 +222,15 @@ public class DatabaseHandler {
                     direction = false;// down
                     circle++;
                 }
+                if (timeUp != 0 || timeDown != 0){
                 resultPosition.add(new Period(timeUp, timeDown, direction));
+                }
             }
         }
         return resultPosition;
     }
 
+    //public Map<Integer, List<Point>> parseData(){}
 
 
     private void copyPointsFromTable(String query, ArrayList<Point> toList) {

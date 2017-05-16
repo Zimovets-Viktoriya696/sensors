@@ -11,10 +11,14 @@ public class Program {
     public static void main(String[] args) {
         DatabaseHandler database = new DatabaseHandler(DATABASE_URL, DATABASE_USERNAME, DATABASE_PASSWORD);
 
-     //   ArrayList<Point> akhz1 = database.GetAkhz1();
+        //   ArrayList<Point> akhz1 = database.GetAkhz1();
         // ArrayList<Float> list = database.getTemperature();
-     //   List<TreeMap<Long, Float>> list = database.getTemperature();
-        Map<Integer, List<Point>> list = database.readAllData(51, 54, "pressdrv_", 0)   ;
+        //   List<TreeMap<Long, Float>> list = database.getTemperature();
+        List<Period> period = database.getPeriods();
+        /*for (int i = 0; i < period.size(); i++) {
+            System.out.println(period.get(i).getLeft() + "left " + period.get(i).getRight() + " right");
+        }*/
+        Map<Integer, List<Point>> list = database.readAllData(51, 54, "amper_", 2);
 
 
         for (int i = 0; i < list.size() - 1; i++) {
@@ -23,7 +27,6 @@ public class Program {
 
                 // System.out.println(i + " " + list.get(i)  + " value ");
             }
-
             //   ArrayList<Long> up = database.fotyUp();
 
      /* for (int i = 0; i < akhz1.size(); i++) {
