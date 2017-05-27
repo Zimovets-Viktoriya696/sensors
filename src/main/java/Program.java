@@ -18,14 +18,15 @@ public class Program {
         /*for (int i = 0; i < period.size(); i++) {
             System.out.println(period.get(i).getLeft() + "left " + period.get(i).getRight() + " right");
         }*/
-        Map<Integer, List<Point>> list = database.readData(/*50, 54,*/ "akhz1_data_50", 1);
-        System.out.println(list.size());
+       // Map<Integer, List<Point>> list = database.readAllData(50, 54, "akhz1_data_", 1);
+        List<Period> list = database.getPeriods();
 
-      //  for (int i = 0; i < list.size() - 1; i++) {
-            for (Map.Entry entry : list.entrySet()) {
-                System.out.println(entry.getKey() + " " + entry.getValue());
 
-                // System.out.println(i + " " + list.get(i)  + " value ");
+         for (int i = 0; i < list.size() - 1; i++) {
+            /*for (Map.Entry entry : list.entrySet()) {
+                System.out.println(entry.getKey() + " " + entry.getValue());*/
+
+                 System.out.println(i + " " + list.get(i).getRight()  + " right " + list.get(i).getLeft() + " left " + list.get(i).isDirection());
             }
             //   ArrayList<Long> up = database.fotyUp();
 

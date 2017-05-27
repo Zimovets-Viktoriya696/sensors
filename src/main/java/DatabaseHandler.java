@@ -188,7 +188,7 @@ public class DatabaseHandler {
     public List<Period> getPeriods () {
         List<Period> resultPosition = new ArrayList<>();
         //Map<Integer, List<Point>> temperature = readAllData(51, 54, "pressdrv_", 0);
-        Map<Integer, List<Point>> position = readAllData(51, 54, "akhz1_data_", 1);
+        Map<Integer, List<Point>> position = readAllData(50, 54, "akhz1_data_", 1);
 
         int count = 1;
         int circle = 1;
@@ -199,26 +199,31 @@ public class DatabaseHandler {
             for (int i = 1; i < entry.getValue().size()-1; i++) {
                 //if (circle < 160) {
                 float temp = entry.getValue().get(i).getValue();
-                float temp1 = entry.getValue().get(i - 1).getValue();
+                float previous = entry.getValue().get(i - 1).getValue();
+                float next = entry.getValue().get(i + 1).getValue();
+
 
                 long time = entry.getValue().get(i).getTime();
-                float delta_old = entry.getValue().get(i).getValue() - entry.getValue().get(i-1).getValue();
-                float delta_new = entry.getValue().get(i + 1).getValue() - entry.getValue().get(i).getValue();
+                float delta_old = temp - previous;
+                float delta_new = next - temp;
                 if (temp < -520 && (delta_new > 0 && delta_old < 0)) {
-                    timeUp = time;
-                    direction = true;// up
-                    circle++;
-                }
-                else if (temp < -520 && (delta_new < 0 && delta_old > 0)) {
+                    System.out.println("z   zzzzz");
+
                     timeUp = time;
                     direction = true;// up
                     circle++;
                 }
                 else if (temp > 50 && (delta_new < 0 && delta_old > 0)) {
                     timeDown = time;
+                    direction = true;// up
+                    circle++;
+                }
+                else if (temp < -520 && (delta_new < 0 && delta_old < 0)) {
+                    timeUp = time;
                     direction = false;// down
                     circle++;
                 }
+
                 else if (temp > 50 && (delta_new > 0 && delta_old < 0)) {
                     timeDown = time;
                     direction = false;// down
@@ -226,6 +231,9 @@ public class DatabaseHandler {
                 }
                 if (timeUp != 0 || timeDown != 0){
                 resultPosition.add(new Period(timeUp, timeDown, direction));
+                timeUp = 0;
+                timeDown = 0;
+                direction = false;
                 }
             }
         }
